@@ -1,0 +1,34 @@
+[
+    {
+        "name": "МИ",
+        "path": "templates/mi.docx",
+        "path_r": "templates/mi_r.docx",
+        "space": [
+            8,
+            15,
+            100
+        ]
+    },
+    {
+        "name": "ГОСТ",
+        "path": "templates/gost.docx",
+        "path_r": "templates/gost_r.docx",
+        "space": [
+            25,
+            10,
+            5
+        ]
+    },
+    {
+        "name": "СТ РК",
+        "path": "templates/strk.docx",
+        "path_r": "templates/strk_r.docx",
+        "space": [
+            25,
+            10,
+            2,
+            1.5,
+            1
+        ]
+    }
+]
