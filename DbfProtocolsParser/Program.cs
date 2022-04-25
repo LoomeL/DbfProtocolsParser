@@ -156,11 +156,12 @@ internal static class Program
 
             for (var i = 0; i < ras.Length; i++)
             {
-                string rr = (Convert.ToDouble("1," + prc[i]) / 100 * protocolIndex.space[i] + protocolIndex.space[i])
-                    .ToString(CultureInfo.CurrentCulture)
-                    .Substring(0, (Convert.ToInt32(protocolIndex.space[i]) + ".").Length + 1);
+                var rr = (Convert.ToDouble("1," + prc[i]) / 100 * protocolIndex.space[i] + protocolIndex.space[i]).ToString(CultureInfo
+                    .CurrentCulture);
+                if (rr.Length - protocolIndex.space[i].ToString(CultureInfo.CurrentCulture).Length > 3)
+                    rr = rr.Substring(0, protocolIndex.space[i].ToString(CultureInfo.CurrentCulture).Length + 3);
                 if (rr.EndsWith("0"))
-                    rr = rr.Substring(0, (protocolIndex.space[i] + ".").Length + 1);
+                    rr = rr.Substring(0, protocolIndex.space[i].ToString(CultureInfo.CurrentCulture).Length + 2);
                 doc.Replace("{r" + protocolIndex.space[i] + "}",rr, false, true);
                 doc.Replace("{p" + protocolIndex.space[i] + "}", "1," + prc[i], false, true);
             }
