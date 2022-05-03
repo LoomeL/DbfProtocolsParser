@@ -91,7 +91,7 @@ internal static class Program
             }
             else
             {
-                if (Convert.ToInt32(((string) r[5]).Trim().Replace("№ NL-07-", "")) < startsWith) continue;
+                if (Convert.ToInt32(Regex.Replace((string) r[5], ".*-07-", "")) < startsWith) continue;
             }
 
             var dt = Convert.ToDateTime((string) r[18]);
