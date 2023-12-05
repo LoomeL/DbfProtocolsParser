@@ -13,7 +13,7 @@ internal static class Program
     private static int _consumption;
     private static ProtocolIndexes[]? _indexes;
     private static readonly Dictionary<string, MemoryStream> TemplateCache = new();
-
+    private static Dictionary<Protocol, DateTime> _protocols = new();
     private static readonly string[] Mouth =
     {
         "января",
@@ -70,33 +70,13 @@ internal static class Program
         using var reader = new DBFReader(fos);
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         reader.CharEncoding = Encoding.GetEncoding(1251);
-
-        Console.WriteLine("Ввод расхода");
-        Console.WriteLine("0 - без ввода расхода");
-        Console.WriteLine("1 - в консоли");
-        _consumption = ReadLineOfRange(0, 1);
-
-        Console.WriteLine("С какого протокола начать?");
-        Console.WriteLine("0 - за сегодня");
-        var startsWith = ReadLineOfRange(0, reader.RecordCount);
-
-        var startTime = DateTime.Now;
+        
         while (true)
         {
             var r = reader.NextRecord();
             if (r == null) break;
-            if (startsWith == 0)
-            {
-                if ((string)r[18] != DateTime.Now.ToShortDateString()) continue;
-            }
-            else
-            {
-                if (Convert.ToInt32(Regex.Replace((string)r[5], ".*-07-", "")) < startsWith) continue;
-            }
-
             var dt = Convert.ToDateTime((string)r[18]);
-
-            WriteProtocol(new Protocol
+            _protocols.Add(new Protocol
             {
                 protocol_number = Regex.Replace((string)r[5], ".*-07-", ""),
                 type = (string)r[7],
@@ -107,12 +87,23 @@ internal static class Program
                 verification_conditions = (string)r[13],
                 date_of_check = $"«{dt.Day}» {Mouth[dt.Month - 1]} {dt.Year} года",
                 verifier = (string)r[21],
-                label_number = (string)r[27]
+                label_number = (string)r[27],
             }, dt);
         }
+        
+        Console.WriteLine("Ввод расхода");
+        Console.WriteLine("0 - без ввода расхода");
+        Console.WriteLine("1 - в консоли");
+        _consumption = ReadLineOfRange(0, 1);
 
-        if (Debugger.IsAttached && _consumption == 0)
-            Console.WriteLine("Time: " + Convert.ToInt32((DateTime.Now - startTime).TotalMilliseconds));
+        Console.WriteLine("С какого протокола начать?");
+        var startsWith = ReadLineOfRange(Convert.ToInt32(_protocols.First().Key.protocol_number), Convert.ToInt32(_protocols.Last().Key.protocol_number));
+
+        foreach (var protocol in _protocols.Where(protocol => Convert.ToInt32(protocol.Key.protocol_number) >= startsWith))
+        {
+            WriteProtocol(protocol.Key, protocol.Value);
+        }
+
         Console.ReadKey();
     }
 
@@ -120,6 +111,7 @@ internal static class Program
     {
         var protocolIndex =
             _indexes.FirstOrDefault(indexes => protocol.verification_conditions.StartsWith(indexes.name));
+        protocolIndex = null;
         if (protocolIndex == null)
         {
             Console.WriteLine(

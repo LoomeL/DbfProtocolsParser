@@ -5,6 +5,7 @@
       <list>
         <option value="$PROJECT_DIR$/DbfProtocolsParser/bin/Release/net6.0/win-x64/publish" />
         <option value="$PROJECT_DIR$/DbfProtocolsParser/bin/Debug/net6.0/win-x64/publish" />
+        <option value="$PROJECT_DIR$/DbfProtocolsParser/bin/Debug/net8.0/win-x86/publish" />
       </list>
     </option>
   </component>
