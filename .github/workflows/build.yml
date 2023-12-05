@@ -11,12 +11,10 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     env:
       ARTIFACT_PATH: ./DbfProtocolsParser/bin/Debug/net8.0/win-x86/publish/DbfProtocolsParser.exe
-      CERT_PATH: "./selfsigned_certificate.pfx"
-      CERT_PASSWORD: "yourCertificatePassword"
 
     steps:
     - uses: actions/checkout@v3
@@ -31,18 +29,10 @@ jobs:
     - name: Publish
       run: dotnet publish --no-build -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
 
-    - name:  Generate and Sign Artifact
+    - name:  Sign Artifact
       run: |
-        openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 3650 -out cert.pem -subj "/CN=YourCompanyName"
-        openssl pkcs12 -export -out $CERT_PATH -inkey key.pem -in cert.pem -passout pass:$CERT_PASSWORD
-        openssl dgst -sha256 -sign $CERT_PATH -out ${{ env.ARTIFACT_PATH }}.signed ${{ env.ARTIFACT_PATH }}
-        openssl dgst -sha256 -verify <(openssl x509 -in cert.pem -pubkey -noout) -signature ${{ env.ARTIFACT_PATH }}.signed
-        rm -f key.pem cert.pem
-
-      env:
-        ARTIFACT_PATH: ${{ env.ARTIFACT_PATH }}
-        CERT_PATH: ${{ env.CERT_PATH }}
-        CERT_PASSWORD: ${{ env.CERT_PASSWORD }}
+        $cert = Get-PfxCertificate -FilePath ./CodeSigningRootCA.pfx -Password (ConvertTo-SecureString -String "password" -AsPlainText -Force)
+        Set-AuthenticodeSignature -FilePath ${{ env.ARTIFACT_PATH }} -Certificate $cert
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
