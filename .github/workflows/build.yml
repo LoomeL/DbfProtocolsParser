@@ -22,6 +22,10 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 8.0.x
+    
+    - name: Print Current Directory
+      run: |
+        Write-Host "Current Directory: $(Get-Location)"
     - name: Publish
       run: dotnet publish -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
     - name:  Sign Artifact
