@@ -14,7 +14,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      ARTIFACT_PATH: ./DbfProtocolsParser/bin/Debug/net8.0/win-x86/publish/DbfProtocolsParser.exe
+      ARTIFACT_PATH: ./DbfProtocolsParser/DbfProtocolsParser/bin/Debug/net8.0/win-x86/publish/DbfProtocolsParser.exe
 
     steps:
     - uses: actions/checkout@v3
@@ -31,7 +31,7 @@ jobs:
 
     - name:  Sign Artifact
       run: |
-        $cert = Get-PfxCertificate -FilePath ./CodeSigningRootCA.pfx -Password (ConvertTo-SecureString -String "password" -AsPlainText -Force)
+        $cert = Get-PfxCertificate -FilePath ./DbfProtocolsParser/CodeSigningRootCA.pfx -Password (ConvertTo-SecureString -String "password" -AsPlainText -Force)
         Set-AuthenticodeSignature -FilePath ${{ env.ARTIFACT_PATH }} -Certificate $cert
 
     - name: Upload Artifact
