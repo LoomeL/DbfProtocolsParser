@@ -22,13 +22,11 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 8.0.x
-#    - name: Publish
-#      run: dotnet publish -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
+    - name: Publish
+      run: dotnet publish -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
     - name:  Sign Artifact
       run: |
-        Write-Host "Current Directory: $(Get-Location)"
-        Write-Host $(Get-ChildItem)
-        $cert = Get-PfxCertificate -FilePath CodeSigningRootCA.pfx -Password (ConvertTo-SecureString -String "password" -AsPlainText -Force)
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=CodeSigningRootCA" -KeyUsage DigitalSignature,CertSign -CertStoreLocation Cert:\CurrentUser\My
         Set-AuthenticodeSignature -FilePath ${{ env.ARTIFACT_PATH }} -Certificate $cert
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
