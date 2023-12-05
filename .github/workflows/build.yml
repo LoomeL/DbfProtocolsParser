@@ -27,7 +27,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish --no-build -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
+      run: dotnet publish -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
 
     - name:  Sign Artifact
       run: |
