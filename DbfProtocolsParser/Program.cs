@@ -1,6 +1,6 @@
-﻿using DotNetDBF;
+﻿using System.Diagnostics;
+using DotNetDBF;
 using Spire.Doc;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -66,29 +66,36 @@ internal static class Program
         if (!File.Exists(fileName)) Exit("Файл: " + fileName + " не найден.", 1);
 
 
-        using Stream fos = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-        using var reader = new DBFReader(fos);
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        reader.CharEncoding = Encoding.GetEncoding(1251);
-        
-        while (true)
+        try
         {
-            var r = reader.NextRecord();
-            if (r == null) break;
-            var dt = Convert.ToDateTime((string)r[18]);
-            _protocols.Add(new Protocol
+            using Stream fos = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            using var reader = new DBFReader(fos);
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            reader.CharEncoding = Encoding.GetEncoding(1251);
+
+            while (true)
             {
-                protocol_number = Regex.Replace((string)r[5], ".*-07-", ""),
-                type = (string)r[7],
-                factory_number = (string)r[8],
-                manufacturer = (string)r[10],
-                high_year = (string)r[11],
-                user = (string)r[12],
-                verification_conditions = (string)r[13],
-                date_of_check = $"«{dt.Day}» {Mouth[dt.Month - 1]} {dt.Year} года",
-                verifier = (string)r[21],
-                label_number = (string)r[27],
-            }, dt);
+                var r = reader.NextRecord();
+                if (r == null) break;
+                var dt = Convert.ToDateTime((string)r[18]);
+                _protocols.Add(new Protocol
+                {
+                    protocol_number = Regex.Replace((string)r[5], ".*-07-", ""),
+                    type = (string)r[7],
+                    factory_number = (string)r[8],
+                    manufacturer = (string)r[10],
+                    high_year = (string)r[11],
+                    user = (string)r[12],
+                    verification_conditions = (string)r[13],
+                    date_of_check = $"«{dt.Day}» {Mouth[dt.Month - 1]} {dt.Year} года",
+                    verifier = (string)r[21],
+                    label_number = (string)r[27],
+                }, dt);
+            }
+        }
+        catch (IOException)
+        {
+            Exit($"Файл {fileName} открыт в другой программе", 1);
         }
         
         Console.WriteLine("Ввод расхода");
@@ -110,8 +117,7 @@ internal static class Program
     private static void WriteProtocol(Protocol protocol, DateTime dt)
     {
         var protocolIndex =
-            _indexes.FirstOrDefault(indexes => protocol.verification_conditions.StartsWith(indexes.name));
-        protocolIndex = null;
+            _indexes.FirstOrDefault(indexes => protocol.verification_conditions.Contains(indexes.name));
         if (protocolIndex == null)
         {
             Console.WriteLine(
@@ -134,45 +140,28 @@ internal static class Program
 
         if (_consumption == 1)
         {
-            Console.WriteLine($"Номер протокола: NL-07-{protocol.protocol_number} Тип: {protocolIndex.name}");
-            Console.WriteLine("Введите расход в виде процента");
-            Console.WriteLine("Например расход 1,4 1,5 1,6 ввести - \"1,4 1,5 1,6\"");
-            List<Double> prc = new();
-            while (true)
+            Console.WriteLine($@"Номер протокола: NL-07-{protocol.protocol_number} Тип: {protocolIndex.name}");
+            Console.WriteLine(@"Введите расход в виде последних цифр процента");
+            Console.WriteLine(@"Например расход 1,4 1,5 1,6 ввести - 456");
+            var ras = Console.ReadLine() ?? "";
+            while (ras.Length != protocolIndex.space.Length)
             {
-                var rl = Console.ReadLine() ?? "";
-                if (rl != "")
-                {
-                    var x = rl.Split(' ');
-                    prc.Clear();
-                    if (x.Length == protocolIndex.space.Length)
-                    {
-                        foreach (var item in x)
-                        {
-                            if (Double.TryParse(item, out _))
-                            {
-                                prc.Add(Convert.ToDouble(item));
-                            }
-                            else break;
-                        }
-                        if (prc.Count == protocolIndex.space.Length) break;
-                    }
-                }
-
-                Console.WriteLine("Неправильно введен расход");
+                Console.WriteLine(@"Неправильно введен расход");
+                ras = Console.ReadLine() ?? "";
             }
 
+            var prc = new StringBuilder(ras);
 
-            for (var i = 0; i < prc.Count; i++)
+            for (var i = 0; i < ras.Length; i++)
             {
-                var rr = (Convert.ToDouble(prc[i]) / 100 * protocolIndex.space[i] + protocolIndex.space[i]).ToString(CultureInfo
+                var rr = (Convert.ToDouble("1," + prc[i]) / 100 * protocolIndex.space[i] + protocolIndex.space[i]).ToString(CultureInfo
                     .CurrentCulture);
                 if (rr.Length - protocolIndex.space[i].ToString(CultureInfo.CurrentCulture).Length > 3)
                     rr = rr.Substring(0, protocolIndex.space[i].ToString(CultureInfo.CurrentCulture).Length + 3);
                 if (rr.EndsWith("0"))
                     rr = rr.Substring(0, protocolIndex.space[i].ToString(CultureInfo.CurrentCulture).Length + 2);
-                doc.Replace("{r" + protocolIndex.space[i] + "}", rr, false, true);
-                doc.Replace("{p" + protocolIndex.space[i] + "}", prc[i].ToString(), false, true);
+                doc.Replace("{r" + protocolIndex.space[i] + "}",rr, false, true);
+                doc.Replace("{p" + protocolIndex.space[i] + "}", "1," + prc[i], false, true);
             }
         }
 
@@ -194,7 +183,7 @@ internal static class Program
                 doc.SaveToFile("output/" + fileName, FileFormat.Docx);
                 break;
             }
-            catch (IOException e)
+            catch (IOException)
             {
                 Console.WriteLine("Файл открыт в другой программе");
                 Console.WriteLine("Закройте другие программы и нажмите любую клавишу.");
