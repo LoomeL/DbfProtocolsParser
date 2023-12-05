@@ -26,7 +26,7 @@ jobs:
       run: dotnet publish -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
     - name:  Sign Artifact
       run: |
-        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=CodeSigningRootCA" -KeyUsage DigitalSignature,CertSign -CertStoreLocation Cert:\CurrentUser\My
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=CodeSigningRootCA" -KeyUsage DigitalSignature,CertSign -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(15)
         Set-AuthenticodeSignature -FilePath ${{ env.ARTIFACT_PATH }} -Certificate $cert
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
