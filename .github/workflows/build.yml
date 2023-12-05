@@ -26,6 +26,9 @@ jobs:
     - name: Print Current Directory
       run: |
         Write-Host "Current Directory: $(Get-Location)"
+    - name: Debug Files in Directory
+      run: |
+         Write-Host $(Get-ChildItem)
     - name: Publish
       run: dotnet publish -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
     - name:  Sign Artifact
