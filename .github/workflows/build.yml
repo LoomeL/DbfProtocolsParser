@@ -23,7 +23,7 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Publish
-      run: dotnet publish -c Debug -a x86 -p:PublishSingleFile=true --self-contained=true
+      run: dotnet publish -c Debug -a x64 -p:PublishSingleFile=true --self-contained=true
     - name:  Sign Artifact
       run: |
         $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=CodeSigningRootCA" -KeyUsage DigitalSignature,CertSign -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(15)
